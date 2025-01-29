@@ -1,5 +1,5 @@
 ;;;
-;;; This is LLM generated code(95%) of git@github.com:ozjongwon/myers.git
+;;; This is LLM generated code(95% ?) of git@github.com:ozjongwon/myers.git
 ;;;
 
 (defn- get-v
