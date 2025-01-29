@@ -7,9 +7,26 @@
   [v-map k max-d]
   (get v-map (+ k max-d) -1))
 
+
+(defn- build-operations
+  "Convert xy-distance-list into a sequence of edit operations.
+   Returns :match if strings are identical."
+  [xy-distance-list]
+  (if (not (next xy-distance-list))
+    :match
+    (loop [[[prev-x prev-y] xy-list & next-xy-distance-list] xy-distance-list
+           op-list ()]
+      (if (nil? xy-list)
+        op-list
+        (let [[ins del skip] [[prev-x (dec prev-y)] [(dec prev-x) prev-y] [(dec prev-x) (dec prev-y)]]]
+          (cond (some #(= % ins) xy-list) (recur `[~ins ~@next-xy-distance-list]
+                                                 (cons (cons :insert ins) op-list))
+                (some #(= % del) xy-list) (recur `[~del ~@next-xy-distance-list]
+                                                 (cons (cons :delete del) op-list))
+                :else (recur `[~skip ~xy-list ~@next-xy-distance-list]
+                             (cons (cons :keep skip) op-list))))))))
+
 (defn myers-distance
-  "Compute the shortest edit sequence between s1 and s2 using Myers' difference algorithm.
-   Returns a vector of edit path coordinates or :fail if no path is found."
   [s1 s2]
   (let [n (count s1)
         m (count s2)
@@ -64,40 +81,5 @@
         (let [{:keys [v-map xy-history found?]}
               (process-d d v-map xy-history)]
           (if found?
-            (cons (ffirst xy-history) (rest xy-history))
+            (build-operations (cons (ffirst xy-history) (rest xy-history)))
             (recur (inc d) v-map xy-history)))))))
-
-(defn build-operations
-  "Convert xy-distance-list into a sequence of edit operations.
-   Returns :match if strings are identical."
-  [xy-distance-list]
-  (if (not (next xy-distance-list))
-    :match
-    (loop [[[prev-x prev-y] xy-list & next-xy-distance-list] xy-distance-list
-           op-list ()]
-      (if (nil? xy-list)
-        op-list
-        (let [[ins del skip] [[prev-x (dec prev-y)] [(dec prev-x) prev-y] [(dec prev-x) (dec prev-y)]]]
-          (cond (some #(= % ins) xy-list) (recur `[~ins ~@next-xy-distance-list]
-                                                 (cons (cons :insert ins) op-list))
-                (some #(= % del) xy-list) (recur `[~del ~@next-xy-distance-list]
-                                                 (cons (cons :delete del) op-list))
-                :else (recur `[~skip ~xy-list ~@next-xy-distance-list]
-                             op-list)))))))
-
-(defn diff-operations
-  "Compute the edit operations needed to transform str1 into str2."
-  [str1 str2]
-  (build-operations (myers-distance str1 str2)))
-
-;; Example usage:
-(comment
-  (diff-operations "ABCABBA" "CBABAC")
-  ;; Returns sequence of edit operations
-
-  (diff-operations "hello" "hello")
-  ;; Returns :match
-
-  (diff-operations "kitten" "sitting")
-  ;; Returns sequence of insert/delete operations
-  )
