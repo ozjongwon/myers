@@ -1,3 +1,7 @@
+;;;
+;;; This is LLM generated code(95%) of git@github.com:ozjongwon/myers.git
+;;;
+
 (defn- get-v
   "Get the x coordinate for diagonal k from v-map"
   [v-map k max-d]
